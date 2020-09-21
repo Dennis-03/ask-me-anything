@@ -6,12 +6,11 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+gunicorn = "*"
 flask = "*"
-flask-mongoengine = "*"
-python-dotenv = "*"
 flask-cors = "*"
 flask-pymongo = "*"
-dnspython = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.8"
