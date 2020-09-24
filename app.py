@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, make_response, redirect
 from flask_cors import CORS
-# from werkzeug.security import generate_password_hash,check_password_hash
+from werkzeug.security import generate_password_hash,check_password_hash
 from flask_jwt_extended import  JWTManager, jwt_required, create_access_token, get_jwt_identity
 from flask_pymongo import PyMongo,pymongo
 import os
@@ -33,7 +33,7 @@ def signup():
     name=request.json['name']
     email=request.json['email']
     password=request.json['password']
-    hashed_pwd=password
+    hashed_pwd=generate_password_hash(password)
 
     existing_user=user.find_one({"email":email})
 
@@ -62,7 +62,7 @@ def find():
 
     user_data=user.find_one({"email":email})
 
-    if (user_data['password']==password):
+    if check_password_hash(user_data["password"],password):
         msg="Logged in successfully"
         token=create_access_token(identity=email)    
     else :
