@@ -3,6 +3,7 @@ from flask_cors import CORS
 
 from werkzeug.security import generate_password_hash,check_password_hash
 from flask_jwt_extended import  JWTManager, jwt_required, create_access_token, get_jwt_identity
+import uuid
 
 from flask_pymongo import PyMongo,pymongo
 from bson.objectid import ObjectId
@@ -101,8 +102,9 @@ def create_events():
     event_name=request.json['event_name']
     event_date=request.json['event_date']
     event_guest=request.json['event_guest']
+    guest_pass=str(uuid.uuid1())
 
-    events.insert_one({"event_name":event_name,"event_date":event_date,"event_guest":event_guest,"user_id":ObjectId(get_jwt_identity())})
+    events.insert_one({"event_name":event_name,"event_date":event_date,"event_guest":event_guest,"guest_pass":guest_pass,"user_id":ObjectId(get_jwt_identity())})
 
     res={
         "message":"Event Created Successfully",
@@ -159,6 +161,7 @@ def get_event_details(event_id):
         "event_name":event_detail['event_name'],
         "event_date":event_detail['event_date'],
         "event_guest":event_detail['event_guest'],
+        "guest_pass":event_detail['guest_pass'],
         "questions":all_questions,
         "no_of_questions":len(all_questions)
     }
@@ -178,6 +181,43 @@ def create_questions(event_id):
     
     res={
         "message":"Question Added Successfully",
+    }
+
+    return make_response(jsonify(res), 200)
+
+
+@app.route("/guest/view-question/<event_id>/<guest_pass>", methods=['GET'])
+def view_questions(event_id,guest_pass):
+
+    event_detail=events.find_one({"_id":ObjectId(event_id)})
+
+    if(event_detail['guest_pass']!=guest_pass):
+        res={
+        "message":"You can't view the questions",
+        }
+        return make_response(jsonify(res), 200)
+        
+    all_user_questions=questions.find({"event_id":ObjectId(event_id)})
+
+    all_questions=[]
+
+    for question in all_user_questions:
+        details={
+            "question_id":str(question['_id']),
+            "question":question['question'],
+            "answer":question['answer'],
+            "attendee_name":question['attendee_name']
+        }
+        all_questions.append(details)
+
+    res={
+        "event_id":event_id,
+        "event_name":event_detail['event_name'],
+        "event_date":event_detail['event_date'],
+        "event_guest":event_detail['event_guest'],
+        "guest_pass":event_detail['guest_pass'],
+        "questions":all_questions,
+        "no_of_questions":len(all_questions)
     }
 
     return make_response(jsonify(res), 200)
