@@ -27,6 +27,7 @@ CORS(app)
 users=mongo.db.users
 questions=mongo.db.questions
 events=mongo.db.events
+attendees=mongo.db.attendees
 
 # JWT token expiry
 expires = timedelta(days=3)
@@ -186,8 +187,32 @@ def create_questions(event_id):
     return make_response(jsonify(res), 200)
 
 
+@app.route("/attendee/view-question/<event_id>", methods=['POST'])
+def attendee_view_questions(event_id):
+
+    attendee_email=request.json['attendee_email']
+    
+    user_questions=questions.find({"attendee_email":attendee_email,"event_id":ObjectId(event_id)})
+    
+    all_questions=[]
+    for question in user_questions:
+        details={
+            "id":str(question["_id"]),
+            "question":question["question"],
+            "answer":question["answer"]
+        }
+        all_questions.append(details)
+    
+    res={
+        "questions":all_questions,
+        "no_of_questions":len(all_questions)
+    }
+
+    return make_response(jsonify(res), 200)
+
+
 @app.route("/guest/view-question/<event_id>/<guest_pass>", methods=['GET'])
-def view_questions(event_id,guest_pass):
+def guest_view_questions(event_id,guest_pass):
 
     event_detail=events.find_one({"_id":ObjectId(event_id)})
 
@@ -223,6 +248,23 @@ def view_questions(event_id,guest_pass):
     return make_response(jsonify(res), 200)
 
 
+# @app.route("/guest/answer-question/<event_id>/<guest_pass>", methods=['PUT'])
+@app.route("/guest/answer-question", methods=['PUT'])
+def guest_answer_questions():
+
+    answer=request.json['answer']
+    question_id=request.json['question_id']
+
+    question_detail=questions.update_one({"_id":ObjectId(question_id)},{"$set":{"answer":answer}})
+
+    # update_answer={"$set":{"answer":answer}}
+
+
+    res={
+        "message":"Updated successfully",
+    }
+
+    return make_response(jsonify(res), 200)
 
 if __name__ == "__main__":
     

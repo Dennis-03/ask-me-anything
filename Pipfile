@@ -12,6 +12,7 @@ flask-cors = "*"
 flask-pymongo = "*"
 python-dotenv = "*"
 flask-jwt-extended = "*"
+dnspython = "*"
 
 [requires]
 python_version = "3.8"
